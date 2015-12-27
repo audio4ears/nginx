@@ -41,7 +41,7 @@ EOF
 # ARGUEMENTS
 #------------------------------------------------------------------------------
 
-while getopts :iu FLAG; do
+while getopts :iuv: FLAG; do
   case $FLAG in
     i|install)
       app='install';
@@ -64,7 +64,7 @@ shift $((OPTIND-1))  #This tells getopts to move on to the next argument.
 # VARIABLES
 #------------------------------------------------------------------------------
 
-NGINX_RELEASE=$(${ver} || '1.6.3');
+NGINX_DEFAULT='1.6.3';
 NGINX_PREFIX='/etc/nginx';
 NGINX_SERVICE='nginx.service';
 SRC_DIR='/usr/local/src';
@@ -82,6 +82,13 @@ else
   exit 1;
 fi
 
+# set nginx release
+if [ ! -z ${ver} ]; then
+  NGINX_RELEASE=${ver};
+else
+  NGINX_RELEASE=${NGINX_DEFAULT};
+fi
+
 # default install nginx
 if [ -z ${app} ]; then
   app='install';
@@ -95,9 +102,9 @@ case ${app} in
     yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
       perl tar wget zlib-devel;
     # install nginx
-    curl http://nginx.org/download/nginx-${NGINX_RELEASE}.tar.gz \
-      | tar -xvz -C ${SRC_DIR}/nginx/nginx-${NGINX_RELEASE};
-    ${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}/configure \
+    curl "http://nginx.org/download/nginx-${NGINX_RELEASE}.tar.gz" \
+      | tar -xvz -C "${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}";
+    "${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}/configure" \
       --user=nginx \
       --group=nginx \
       --prefix=${NGINX_PREFIX} \
