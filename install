@@ -64,7 +64,7 @@ shift $((OPTIND-1))  #This tells getopts to move on to the next argument.
 # VARIABLES
 #------------------------------------------------------------------------------
 
-NGINX_DEFAULT='1.6.3';
+NGINX_DEFAULT='1.6.2';
 NGINX_PREFIX='/etc/nginx';
 NGINX_SERVICE='nginx.service';
 SRC_DIR='/usr/local/src';
@@ -102,8 +102,9 @@ case ${app} in
     yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
       perl tar wget zlib-devel;
     # install nginx
+    mkdir -p "${SRC_DIR}/nginx";
     curl "http://nginx.org/download/nginx-${NGINX_RELEASE}.tar.gz" \
-      | tar -xvz -C "${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}";
+      | tar -xvz -C "${SRC_DIR}/nginx";
     "${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}/configure" \
       --user=nginx \
       --group=nginx \
