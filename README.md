@@ -25,12 +25,13 @@ By default the following modules are included with this installation:
 Basic Installation:
 
 ```bash
-$ bash -c "$(curl -#fL raw.github.com/audio4ears/nginx-source/master/install)"
+$ git clone git@github.com:audio4ears/nginx-source.git
+$ nginx-source/install
 ```
 
 Custom Installation:
 
 ```bash
-$ git clone
+$ git clone git@github.com:audio4ears/nginx-source.git
 $ nginx-source/install -v 1.2.3
 ```
