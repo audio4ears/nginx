@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+#------------------------------------------------------------------------------
+# FUNCTIONS
+#------------------------------------------------------------------------------
+
+function service_ctl () {
+  # @TODO find better way to consume previously defined vars
+  REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
+    | awk -F. '{print $1 "." $2}');
+  # determine controller
+  if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
+    ctl='service';
+  else
+    ctl='systemctl';
+  fi
+  # signal service
+  case $1 in
+    start|stop|reload)
+      $ctl $1 $2;
+      ;;
+    *)
+      echo "==> ERROR: unsupported request '$ctl $1 $2'";
+      exit 1;
+      ;;
+  esac
+}
+
+function usage () {
+  cat << EOF
+  Usage: $0 -(install|uninstall)
+
+    -i|install        install nginx from source
+    -u|uninstall      uninstall nginx
+    -v|version        install specific nginx version (default: 1.6.3)
+
+EOF
+}
+
+#------------------------------------------------------------------------------
+# ARGUEMENTS
+#------------------------------------------------------------------------------
+
+while getopts :iu FLAG; do
+  case $FLAG in
+    i|install)
+      app='install';
+      ;;
+    u|uninstall)
+      app='uninstall';
+      ;;
+    v|version)
+      ver=$OPTARG;
+      ;;
+    *)
+      usage;
+      exit 0;
+      ;;
+  esac
+done
+shift $((OPTIND-1))  #This tells getopts to move on to the next argument.
+
+#------------------------------------------------------------------------------
+# VARIABLES
+#------------------------------------------------------------------------------
+
+NGINX_RELEASE=$(${ver} || '1.6.3');
+NGINX_PREFIX='/etc/nginx';
+NGINX_SERVICE='nginx.service';
+SRC_DIR='/usr/local/src';
+
+#------------------------------------------------------------------------------
+# MAIN
+#------------------------------------------------------------------------------
+
+# verify os
+if [ -f /etc/redhat-release ]; then
+  REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
+    | awk -F. '{print $1 "." $2}');
+else
+  echo "==> ERROR: Unsupported operating system";
+  exit 1;
+fi
+
+# default install nginx
+if [ -z ${app} ]; then
+  app='install';
+fi
+
+# nginx app install/uninstall
+case ${app} in
+  install)
+    # install prerequsites
+    yum update -y && yum clean all;
+    yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
+      perl tar wget zlib-devel;
+    # install nginx
+    curl http://nginx.org/download/nginx-${NGINX_RELEASE}.tar.gz \
+      | tar -xvz -C ${SRC_DIR}/nginx/nginx-${NGINX_RELEASE};
+    ${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}/configure \
+      --user=nginx \
+      --group=nginx \
+      --prefix=${NGINX_PREFIX} \
+      --sbin-path=/usr/sbin/nginx \
+      --conf-path=/etc/nginx/nginx.conf \
+      --pid-path=/var/run/nginx.pid \
+      --lock-path=/var/run/nginx.lock \
+      --error-log-path=/var/log/nginx/error.log \
+      --http-log-path=/var/log/nginx/access.log \
+      --with-http_gzip_static_module \
+      --with-http_stub_status_module \
+      --with-http_ssl_module \
+      --with-pcre \
+      --with-http_realip_module;
+    # replace default nginx conf
+    rm -f ${NGINX_PREFIX}/nginx.conf;
+    cp files/conf/nginx.conf ${NGINX_PREFIX}/nginx.conf;
+    # add service handling
+    if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
+      # redhat release < 7.0
+      cp files/service/nginx.init.d /etc/init.d/nginx;
+      chmod 755 /etc/init.d/nginx;
+      chown root:root /etc/init.d/nginx;
+      chkconfig nginx on;
+    else
+      # redhat release >= 7.0
+      cp files/service/nginx.systemd /lib/systemd/system/nginx.service;
+      chmod 644 /lib/systemd/system/nginx.service;
+      chown root:root /lib/systemd/system/nginx.service;
+      systemctl daemon-reload;
+      systemctl enable nginx;
+    fi
+    # status
+    echo '==> OK: nginx has been installed';
+    ;;
+  uninstall)
+    # uninstall nginx
+    service_ctl stop ${NGINX_SERVICE};
+    if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
+      # redhat release < 7.0
+      chkconfig nginx off;
+      rm -f /etc/init.d/nginx;
+    else
+      # redhat release >= 7.0
+      systemctl disable nginx;
+      rm -f /lib/systemd/system/nginx.service;
+      systemctl daemon-reload;
+    fi
+    rm -rf ${SRC_DIR}/nginx;
+    rm -rf ${NGINX_PREFIX};
+    # status
+    echo 'OK: nginx has been uninstalled';
+    ;;
+esac
