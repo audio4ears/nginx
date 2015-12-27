@@ -98,10 +98,12 @@ fi
 case ${app} in
   install)
     # install prerequsites
+    echo "==> Installing Prerequsites";
     yum update -y && yum clean all;
     yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
       perl tar wget zlib-devel;
     # install nginx
+    echo "==> Installing Nginx";
     mkdir -p "${SRC_DIR}/nginx";
     curl "http://nginx.org/download/nginx-${NGINX_RELEASE}.tar.gz" \
       | tar -xvz -C "${SRC_DIR}/nginx";
@@ -122,9 +124,11 @@ case ${app} in
       --with-pcre \
       --with-http_realip_module;
     # replace default nginx conf
+    echo "==> Configuring Nginx";
     rm -f ${NGINX_PREFIX}/nginx.conf;
     cp files/conf/nginx.conf ${NGINX_PREFIX}/nginx.conf;
     # add service handling
+    echo "==> Configuring Nginx service";
     if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
       # redhat release < 7.0
       cp files/service/nginx.init.d /etc/init.d/nginx;
