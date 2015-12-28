@@ -102,9 +102,9 @@ case ${app} in
     yum update -y && yum clean all;
     yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
       perl tar wget zlib-devel;
-    # creaate nginx user
-    #groupadd nginx;
-    #useradd nginx -g nginx -c 'nginx user' -s /bin/bash;
+    # create nginx user
+    echo "==> Creating nginx user";
+    useradd nginx -U -M -d / -c 'nginx service user' -s /sbin/nologin;
     # install nginx
     echo "==> Installing Nginx";
     mkdir -p "${SRC_DIR}/nginx";
