@@ -4,9 +4,9 @@ Installs [NGINX](https://www.nginx.com/resources/wiki/) from source on CentOS ``
 
 ### NGINX Version
 
-This script will keep its default version of NGINX inline with the default version being utilized by the Chef Supermarket [NGINX](https://supermarket.chef.io/cookbooks/nginx) Cookbook. That being said, any version of NGINX can be specified for installation using the ```-v``` switch followed by the desired version.
+This script will install the latest stable version of nginx, currently ```1.8.0```, by default. That being said, any version of NGINX can be specified for installation using the ```-v``` switch followed by the desired version.
 
-default version: ```1.6.2```
+current version ```1.8.0```
 
 ### NGINX Modules
 
@@ -23,11 +23,11 @@ By default the following modules are included with this installation:
 Usage:
 
 ```
-  Usage: ./install -(install|uninstall)
+  Usage: ./install -(i|u)
 
-    -i|install        install nginx from source
-    -u|uninstall      uninstall nginx
-    -v|version        install specific nginx version (default: 1.6.2)
+    -i        install nginx from source
+    -u        uninstall nginx
+    -v        install specific nginx version (default: 1.8.0)
 ```  
 
 Installation:
@@ -35,11 +35,4 @@ Installation:
 ```
 $ git clone git@github.com:audio4ears/nginx-source.git
 $ nginx-source/install
-```
-
-Custom Installation:
-
-```
-$ git clone git@github.com:audio4ears/nginx-source.git
-$ nginx-source/install -v 1.2.3
 ```

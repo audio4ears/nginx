@@ -28,11 +28,11 @@ function svc_ctrl () {
 
 function usage () {
   cat << EOF
-  Usage: $0 -(install|uninstall)
+  Usage: $0 -(i|u)
 
-    -i|install        install nginx from source
-    -u|uninstall      uninstall nginx
-    -v|version        install specific nginx version (default: 1.6.2)
+    -i        install nginx from source
+    -u        uninstall nginx
+    -v        install specific nginx version (default: 1.8.0)
 
 EOF
 }
@@ -64,7 +64,7 @@ shift $((OPTIND-1))  #This tells getopts to move on to the next argument.
 # VARIABLES
 #------------------------------------------------------------------------------
 
-NGINX_DEFAULT='1.6.2';
+NGINX_DEFAULT='1.8.0';
 NGINX_PREFIX='/etc/nginx';
 NGINX_SERVICE='nginx.service';
 SRC_DIR='/usr/local/src';
@@ -135,7 +135,7 @@ case ${app} in
     cp files/conf/nginx.conf ${NGINX_PREFIX}/nginx.conf;
     # add service handling
     echo "==> Configuring Nginx service";
-    if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
+    if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
       # redhat release < 7.0
       cp files/service/nginx.init.d /etc/init.d/nginx;
       chmod 755 /etc/init.d/nginx;
@@ -156,7 +156,7 @@ case ${app} in
   uninstall)
     # uninstall nginx
     svc_ctrl stop ${NGINX_SERVICE};
-    if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
+    if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
       # redhat release < 7.0
       chkconfig nginx off;
       rm -f /etc/init.d/nginx;
