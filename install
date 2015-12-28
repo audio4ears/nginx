@@ -32,7 +32,7 @@ function usage () {
 
     -i|install        install nginx from source
     -u|uninstall      uninstall nginx
-    -v|version        install specific nginx version (default: 1.6.3)
+    -v|version        install specific nginx version (default: 1.6.2)
 
 EOF
 }
