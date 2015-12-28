@@ -102,6 +102,9 @@ case ${app} in
     yum update -y && yum clean all;
     yum install -y bc curl gcc gcc-c++ make openssl-devel pcre pcre-devel \
       perl tar wget zlib-devel;
+    # creaate nginx user
+    #groupadd nginx;
+    #useradd nginx -g nginx -c 'nginx user' -s /bin/bash;
     # install nginx
     echo "==> Installing Nginx";
     mkdir -p "${SRC_DIR}/nginx";
@@ -124,6 +127,7 @@ case ${app} in
       --with-http_ssl_module \
       --with-pcre \
       --with-http_realip_module;
+    make && make install;
     popd;
     # replace default nginx conf
     echo "==> Configuring Nginx";
