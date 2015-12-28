@@ -4,23 +4,23 @@
 # FUNCTIONS
 #------------------------------------------------------------------------------
 
-function service_ctl () {
+function svc_ctrl () {
   # @TODO find better way to consume previously defined vars
   REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
     | awk -F. '{print $1 "." $2}');
   # determine controller
   if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
-    ctl='service';
+    ctrl='service';
   else
-    ctl='systemctl';
+    ctrl='systemctl';
   fi
   # signal service
   case $1 in
     start|stop|reload)
-      $ctl $1 $2;
+      $ctrl $1 $2;
       ;;
     *)
-      echo "==> ERROR: unsupported request '$ctl $1 $2'";
+      echo "==> ERROR: unsupported request '$ctrl $1 $2'";
       exit 1;
       ;;
   esac
@@ -149,12 +149,13 @@ case ${app} in
       systemctl daemon-reload;
       systemctl enable nginx;
     fi
+    svc_ctrl start nginx;
     # status
     echo '==> OK: nginx has been installed';
     ;;
   uninstall)
     # uninstall nginx
-    service_ctl stop ${NGINX_SERVICE};
+    svc_ctrl stop ${NGINX_SERVICE};
     if [[ $(echo ${REDHAT_RELEASE}'>=7.0' | bc) == 0 ]]; then
       # redhat release < 7.0
       chkconfig nginx off;
