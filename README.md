@@ -25,9 +25,9 @@ Usage:
 ```
   Usage: ./install -(i|u)
 
-    -i        install nginx from source
+    -i        install nginx from source [default]
     -u        uninstall nginx
-    -v        install specific nginx version (default: 1.8.0)
+    -v        install specific nginx version [default: 1.8.0]
 ```  
 
 Installation:

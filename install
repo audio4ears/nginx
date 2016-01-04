@@ -97,6 +97,11 @@ fi
 # nginx app install/uninstall
 case ${app} in
   install)
+    # check for existing installation
+    if [ -f ${NGINX_PREFIX}/* ]; then
+      echo "==> ERROR: Existing nginx installation found at ${NGINX_PREFIX}";
+      exit 1;
+    fi
     # install prerequsites
     echo "==> Installing Prerequsites";
     yum update -y && yum clean all;
@@ -132,20 +137,22 @@ case ${app} in
     # replace default nginx conf
     echo "==> Configuring Nginx";
     mkdir -p "${NGINX_PREFIX}/defaults";
+    mv ${NGINX_PREFIX}/*.default ${NGINX_PREFIX}/defaults;
+    mv ${NGINX_PREFIX}/nginx.conf ${NGINX_PREFIX}/defaults;
+    cp ${HOME}/nginx/nginx.conf ${NGINX_PREFIX}/nginx.conf;
     mkdir -p ${NGINX_PREFIX}/sites-{enabled,available};
-    mv ${NGINX_PREFIX}/*.default ${NGINX_PREFIX}/nginx.conf ${NGINX_PREFIX}/defaults;
-    cp ${HOME}/files/conf/nginx.conf ${NGINX_PREFIX}/nginx.conf;
+    cp ${HOME}/nginx/sites-available/* ${NGINX_PREFIX}/sites-available;
     # add service handling
     echo "==> Configuring Nginx service";
     if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
       # redhat release < 7.0
-      cp ${HOME}/files/service/nginx.init.d /etc/init.d/nginx;
+      cp ${HOME}/service/nginx.init.d /etc/init.d/nginx;
       chmod 755 /etc/init.d/nginx;
       chown root:root /etc/init.d/nginx;
       chkconfig nginx on;
     else
       # redhat release >= 7.0
-      cp ${HOME}/files/service/nginx.systemd /lib/systemd/system/nginx.service;
+      cp ${HOME}/service/nginx.systemd /lib/systemd/system/nginx.service;
       chmod 644 /lib/systemd/system/nginx.service;
       chown root:root /lib/systemd/system/nginx.service;
       systemctl daemon-reload;
@@ -170,6 +177,7 @@ case ${app} in
     fi
     rm -rf ${SRC_DIR}/nginx;
     rm -rf ${NGINX_PREFIX};
+    rm -f /sbin/nginx;
     # status
     echo 'OK: nginx has been uninstalled';
     ;;
