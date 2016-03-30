@@ -1,0 +1,11 @@
+geo $remote_addr $authorized_ip {
+  default no;
+
+  # self
+  127.0.0.1/32 yes;
+
+  # private network(s)
+  10.0.0.0/8 yes;
+  172.16.0.0/12 yes;
+  192.168.0.0/16 yes;
+}
