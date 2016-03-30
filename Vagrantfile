@@ -4,12 +4,12 @@
 Vagrant.require_version ">= 1.7.4"
 
 # variables
-$vm_box = "opscode_centos-7.1"
-$vm_box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-7.1_chef-provisionerless.box"
+$vm_box = "centos-7.2"
+$vm_box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-7.2_chef-provisionerless.box"
 $vm_box_download_checksum_type = "md5"
-$vm_box_download_checksum = "e3531c96524b951869544be36667259e"
+$vm_box_download_checksum = "3177d17d95212b4881aeec01c3a37eba"
 $vm_gui = false
-$vm_name = "nginx-box"
+$vm_name = "nginx-bash"
 $vm_memory = 2048
 $vm_cpu = 2
 

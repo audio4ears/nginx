@@ -1,4 +1,4 @@
-# nginx-source
+# nginx
 
 Installs [NGINX](https://www.nginx.com/resources/wiki/) from source on CentOS ```6.x``` and ```7.x``` operating systems.
 
@@ -33,6 +33,26 @@ Usage:
 Installation:
 
 ```
-$ git clone git@github.com:audio4ears/nginx-source.git
-$ nginx-source/install
+$ git clone git@github.com:audio4ears/nginx.git
+$ nginx/install
 ```
+
+Vagrant Sandbox:
+
+```
+$ git clone git@github.com:audio4ears/nginx.git
+$ cd nginx
+$ vagrant up
+```
+
+### Hello NGINX
+
+To verify NGINX is serving traffic, verify the following pages are displaying correctly:
+
+- http://localhost
+- http://localhost/status
+
+Using Vagrant Sandbox:
+
+- http://localhost:8080
+- http://localhost:8080/status

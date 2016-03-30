@@ -5,25 +5,20 @@
 #------------------------------------------------------------------------------
 
 function svc_ctrl () {
-  # @TODO find better way to consume previously defined vars
-  REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
-    | awk -F. '{print $1 "." $2}');
-  # determine controller
-  if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
-    ctrl='service';
+  if [ -f /etc/redhat-release ]; then
+    # get platform version
+    REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
+      | awk -F. '{print $1}');
+    # signal service
+    if [ "${REDHAT_RELEASE}" -ge "7" ]; then
+      service $2 $1; 
+    else
+      systemctl $1 $2;
+    fi
   else
-    ctrl='systemctl';
+    echo "==> ERROR: Unsupported operating system";
+    exit 1;
   fi
-  # signal service
-  case $1 in
-    start|stop|reload)
-      $ctrl $1 $2;
-      ;;
-    *)
-      echo "==> ERROR: unsupported request '$ctrl $1 $2'";
-      exit 1;
-      ;;
-  esac
 }
 
 function usage () {
@@ -44,10 +39,10 @@ EOF
 while getopts :iuv: FLAG; do
   case $FLAG in
     i|install)
-      app='install';
+      cmd='install';
       ;;
     u|uninstall)
-      app='uninstall';
+      cmd='uninstall';
       ;;
     v|version)
       ver=$OPTARG;
@@ -76,7 +71,7 @@ HOME=`dirname $(realpath $0)`;
 # verify os
 if [ -f /etc/redhat-release ]; then
   REDHAT_RELEASE=$(grep -Eo "[0-9.]+" /etc/redhat-release \
-    | awk -F. '{print $1 "." $2}');
+    | awk -F. '{print $1}');
 else
   echo "==> ERROR: Unsupported operating system";
   exit 1;
@@ -90,12 +85,12 @@ else
 fi
 
 # default install nginx
-if [ -z ${app} ]; then
-  app='install';
+if [ -z ${cmd} ]; then
+  cmd='install';
 fi
 
 # nginx app install/uninstall
-case ${app} in
+case ${cmd} in
   install)
     # check for existing installation
     if [ -f ${NGINX_PREFIX}/* ]; then
@@ -118,20 +113,20 @@ case ${app} in
     mkdir -p "${NGINX_PREFIX}";
     pushd "${SRC_DIR}/nginx/nginx-${NGINX_RELEASE}";
     ./configure \
-      --user=nginx \
-      --group=nginx \
       --prefix=${NGINX_PREFIX} \
       --sbin-path=/usr/sbin/nginx \
       --conf-path=/etc/nginx/nginx.conf \
-      --pid-path=/var/run/nginx.pid \
-      --lock-path=/var/run/nginx.lock \
       --error-log-path=/var/log/nginx/error.log \
       --http-log-path=/var/log/nginx/access.log \
-      --with-http_gzip_static_module \
-      --with-http_stub_status_module \
-      --with-http_ssl_module \
+      --pid-path=/var/run/nginx.pid \
+      --lock-path=/var/run/nginx.lock \
+      --user=nginx \
+      --group=nginx \
       --with-pcre \
-      --with-http_realip_module;
+      --with-http_ssl_module \
+      --with-http_realip_module \
+      --with-http_gzip_static_module \
+      --with-http_stub_status_module;
     make && make install;
     popd;
     # replace default nginx conf
@@ -139,12 +134,13 @@ case ${app} in
     mkdir -p "${NGINX_PREFIX}/defaults";
     mv ${NGINX_PREFIX}/*.default ${NGINX_PREFIX}/defaults;
     mv ${NGINX_PREFIX}/nginx.conf ${NGINX_PREFIX}/defaults;
-    cp ${HOME}/nginx/nginx.conf ${NGINX_PREFIX}/nginx.conf;
+    cp ${HOME}/nginx/{nginx.conf,authorized_ip,http_realip} ${NGINX_PREFIX}/;
     mkdir -p ${NGINX_PREFIX}/sites-{enabled,available};
     cp ${HOME}/nginx/sites-available/* ${NGINX_PREFIX}/sites-available;
+    ln -s ${NGINX_PREFIX}/sites-available/hello_world.conf ${NGINX_PREFIX}/sites-enabled/hello_world.conf;
     # add service handling
     echo "==> Configuring Nginx service";
-    if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
+    if [ "${REDHAT_RELEASE}" -ge "7" ]; then
       # redhat release < 7.0
       cp ${HOME}/service/nginx.init.d /etc/init.d/nginx;
       chmod 755 /etc/init.d/nginx;
@@ -159,13 +155,15 @@ case ${app} in
       systemctl enable nginx;
     fi
     svc_ctrl start nginx;
+    # add logrotate settings
+    cp ${HOME}/logrotate/nginx.logrotate /etc/logrotate.d/nginx;
     # status
     echo '==> OK: nginx has been installed';
     ;;
   uninstall)
     # uninstall nginx
     svc_ctrl stop nginx;
-    if [[ $(echo "${REDHAT_RELEASE}>=7.0" | bc) == 0 ]]; then
+    if [ "${REDHAT_RELEASE}" -ge "7" ]; then
       # redhat release < 7.0
       chkconfig nginx off;
       rm -f /etc/init.d/nginx;
@@ -178,6 +176,10 @@ case ${app} in
     rm -rf ${SRC_DIR}/nginx;
     rm -rf ${NGINX_PREFIX};
     rm -f /sbin/nginx;
+    rm -f /usr/sbin/nginx;
+    rm -rf /var/log/nginx;
+    rm -f /var/run/nginx.pid;
+    rm -f /var/run/nginx.lock; 
     # status
     echo 'OK: nginx has been uninstalled';
     ;;
